@@ -18,16 +18,11 @@ class Login extends BaseAuthResolver
     public function resolve($rootValue, array $args, GraphQLContext $context = null, ResolveInfo $resolveInfo)
     {
         $credentials = $this->buildCredentials($args);
-        $guard = $args['data']['customProvider'] ?? "api";
-
-        $provider = config("auth.guards.{$guard}.provider");
-
-        // dd($credentials);
         $response = $this->makeRequest($credentials);
-        $model = app(config("auth.providers.{$provider}.model"));
-
+        $model = app(config('auth.providers.users.model'));
         $user = $model->where(config('lighthouse-graphql-passport.username'), $args['data']['username'])->firstOrFail();
         $response['user'] = $user;
         return $response;
     }
+
 }

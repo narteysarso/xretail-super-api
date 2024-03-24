@@ -19,15 +19,15 @@ class Logout extends BaseAuthResolver
      */
     public function resolve($rootValue, array $args, GraphQLContext $context = null, ResolveInfo $resolveInfo)
     {
-        $guard = $args['data']['customProvider'] ?? "api";
-        if (!Auth::guard($guard)->check()) {
+        if (!Auth::guard('api')->check()) {
             throw new AuthenticationException("Not Authenticated");
         }
         // revoke user's token
-        Auth::guard($guard)->user()->token()->revoke();
+        Auth::guard('api')->user()->token()->revoke();
         return [
             'status' => 'TOKEN_REVOKED',
             'message' => 'Your session has been terminated'
         ];
     }
+
 }

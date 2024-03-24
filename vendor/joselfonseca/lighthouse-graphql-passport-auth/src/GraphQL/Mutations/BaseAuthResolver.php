@@ -23,13 +23,10 @@ class BaseAuthResolver
 
     public function makeRequest(array $credentials)
     {
-
-        $request = Request::create('oauth/token', 'POST', $credentials, [], [], [
+        $request = Request::create('oauth/token', 'POST', $credentials,[], [], [
             'HTTP_Accept' => 'application/json'
         ]);
         $response = app()->handle($request);
-
-        // dd($response);
         $decodedResponse = json_decode($response->getContent(), true);
         if ($response->getStatusCode() != 200) {
             throw new AuthenticationException($decodedResponse['message']);
