@@ -1,0 +1,47 @@
+input CreateAppInput {
+    name: String! @rules(apply: ["unique:apps,name"])
+    remote_auth_url: String
+    remote_products_data_url: String
+    remote_staff_data_url: String
+    customProvider: String
+    expire_in: String
+}
+
+type App {
+    id: ID!
+    name: String
+    icon: String
+    token: String!
+    expires_in: String
+    remote_auth_url: String
+    remote_staff_data_url: String
+    remote_products_data_url: String
+    created_at: DateTime
+    updated_at: DateTime
+    user: User! @belongsTo(model: "App\\User")
+    roles: [Role] @idORNull(keys: ["app_id", "id"])
+    staffs: [Staff] @hasMany(model: "App\\Staff")
+}
+
+#should be gaurded
+extend type Query @group(middleware: ["auth:user"]) {
+    myApps: [App] @me @all
+    myApp(id: ID! @eq @rules(apply: ["exists:apps,id"])): App @me @find
+}
+
+#should be gaurded
+extend type Mutation @group(middleware: ["auth:user"]) {
+    createApp(data: CreateAppInput! @spread): App
+        @token
+        @expire
+        @inject(context: "user.id", name: "user_id")
+        @createAppService
+        @create
+
+    newAppToken(id: ID! @rules(apply: ["exists:apps,id"])): App
+        @token
+        @verifyMe
+        @update
+
+    removeApp(id: ID! @rules(apply: ["exists:apps,id"])): App @verifyMe @delete
+}

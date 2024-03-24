@@ -1,0 +1,37 @@
+type User {
+    id: ID!
+    name: String!
+    email: String!
+    phone: String
+    created_at: DateTime
+    updated_at: DateTime
+    apps: [App] @hasMany(model: "App\\App")
+}
+
+input RegisterUserInput {
+    name: String!
+    email: String! @rules(apply: ["email", "unique:users,email"])
+    phone: String @rules(apply: ["max:15"])
+    password: String! @bcrypt
+}
+
+extend type Mutation {
+    registerUser(data: RegisterUserInput! @spread): User! @createUserService @create
+}
+
+extend type Query {
+    # users: [User] @all
+    # user(id: ID! @eq): User @find
+    me: User @auth
+}
+
+extend type Mutation @group(middleware: ["auth:user"]) {
+    updateUser(
+        name: String!
+        email: String @rules(apply: ["email", "unique:users"])
+        phone: String @rules(apply: ["max:15"])
+        password: String @bcrypt
+    ): User!
+
+    removeAccount: User
+}

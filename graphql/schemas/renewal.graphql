@@ -1,0 +1,39 @@
+
+type Renewal {
+    id: ID!
+    name: String
+    expires_in: String!
+}
+
+type SubscriptionCode {
+    id: String
+    code: String!,
+    days: Int!
+    app: App @belongsTo(model: "App\\App")
+}
+
+type Expiration {
+    expires: DateTime
+}
+
+extend type Query @group(middleware: ["auth:user"]){
+    subscriptionCodes: [SubscriptionCode] @all
+}
+
+extend type Mutation @group(middleware: ["auth:user"]){
+    generateSubscriptionCode(days: Int!): SubscriptionCode @inject(context: "user.id", name: "user_id") @createSubscriptionCodeUseCase @create 
+    renewSubscription(data: RenewalInput! @spread, id: ID @eq ): Renewal 
+    @inject(context: "user.app_id", name: "id")
+    @update(model: "App\\App")
+    @renewSubscription
+}
+
+extend type Mutation{
+    assignSubscriptionCode(
+        app_id: ID! @rules(apply: ["exists:apps,id"])
+        code: String! @where @rules(apply: ["exists:subscription_codes,code"]), key: String ): SubscriptionCode 
+}
+
+input RenewalInput {
+    code: String!
+}

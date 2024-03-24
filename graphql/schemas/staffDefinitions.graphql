@@ -1,0 +1,87 @@
+input CreateStaffRoleInput {
+    id: ID!
+    role: CreateRoleRelation
+}
+input CreateStaffInput {
+    name: String!
+    email: String! @rules(apply: ["unique:staffs,email"])
+    phone: String @rules(apply: ["max:15", "min:10"])
+    role: Int @rules(apply: ["exists:roles,id"])
+    app_token: String @rules(apply: ["exists:apps,token"])
+    password: String
+}
+
+input UpdateStaffInput {
+    id: ID
+    name: String!
+    email: String! @rules(apply: ["exists:staffs,email"])
+    phone: String @rules(apply: ["max:20", "min:10"])
+    password: String
+    # app_token: String! @rules(apply: ["exists:apps,token"])
+    role: Int @rules(apply: ["exists:roles,id"])
+
+    fileData: String
+}
+
+input ChangePasswordInput {
+    username: String
+    new_password: String
+    conf_password: String
+    password: String
+    customProvider: String
+}
+input CreateStaffIDInput {
+    id: ID! @rules(apply: ["exists:staffs,id"])
+}
+
+type Staff {
+    id: ID!
+    name: String!
+    email: String!
+    phone: String
+    is_active: Boolean
+    created_at: DateTime
+    updated_at: DateTime
+    roles: [Role] @belongsToMany(model: "App\\Role")
+    app: App! @belongsTo(model: "App\\App")
+}
+
+extend type Query @group(middleware: ["auth:user"]) {
+    staffs(app_token: String! @rules(apply: ["exists:apps,token"])): [Staff]
+        @app
+        @all
+    staff(
+        id: ID! @eq @rules(apply: ["exists:staffs,id"])
+        app_token: String! @rules(apply: ["exists:apps,token"])
+    ): Staff  @app @find
+}
+
+
+extend type Mutation @group(middleware: ["auth:user"]) {
+    registerStaff(data: CreateStaffInput! @spread): Staff @me @createStaffService @app
+
+    unregisterStaff(
+        id: ID! @eq
+        app_token: String! @rules(apply: ["exists:apps,token"])
+    ): Staff @app 
+
+    assignStaffRole(
+        staff_id: ID!
+        role_id: ID @rules(apply: ["exists:roles,id"])
+        app_token: String! @rules(apply: ["exists:apps,token"])
+    ): Staff
+        @app
+        @attach(
+            key: "staff_id"
+            relation: "roles"
+            relationKey: "role_id"
+            excepts: ["app_token", "id"]
+        )
+
+    revokeStaffRole(
+        id: ID!
+        role_id: Int @rules(apply: ["exists:roles,id"])
+        app_token: String! @rules(apply: ["exists:apps,token"])
+    ): Staff @app @detach(key: "id", relation: "roles", relationKey: "role_id")
+}
+

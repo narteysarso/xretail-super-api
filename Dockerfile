@@ -1,0 +1,1 @@
+FROM narteysarso/nginx-php-server:latest 

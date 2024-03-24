@@ -1,0 +1,22 @@
+extend type Query @group(namespace: "root", middleware: ["auth:user"]) {
+    users: [User] @all
+    user(id: ID! @eq): User @find
+}
+
+extend type Mutation @group(namespace: "root", middleware: ["auth:user"]) {
+    addUser(
+        name: String!
+        email: String! @rules(apply: ["email", "unique:users"])
+        phone: String @rules(apply: ["max:15"])
+        password: String! @bcrypt
+    ): User! @create
+
+    editUser(
+        id: ID! @rules(apply: ["exists:users,id"])
+        name: String!
+        email: String! @rules(apply: ["email", "unique:users"])
+        phone: String @rules(apply: ["max:15"])
+    ): User! @update
+
+    removeUserAccount(id: ID! @rules(apply: ["exists:users,id"])): User @delete
+}
